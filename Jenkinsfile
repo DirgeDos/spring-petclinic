@@ -32,7 +32,6 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                input message: '确认部署到生产环境？', ok: '部署'
                 sh "chmod +x deploy.sh && ./deploy.sh ${DOCKER_TAG}"
             }
         }
