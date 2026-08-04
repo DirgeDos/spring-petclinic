@@ -77,10 +77,12 @@ echo "  ✅ ${NEW_CONTAINER} is healthy!"
 # ------------------------------------------------------------
 echo "[3/4] Switching traffic to ${NEW_CONTAINER}..."
 
-# Write Nginx config to host file (bind-mounted into container)
-# Using a quoted heredoc to prevent shell expansion of Nginx variables,
-# then use sed to inject the container name.
-cat > /opt/nginx-conf/default.conf << 'NGINXEOF'
+# Write Nginx config to a temp file in the Jenkins workspace,
+# then docker cp into the Nginx container.
+# (Cannot write to host /opt/nginx-conf directly because this script
+#  runs inside the Jenkins container, not on the host.)
+TMP_CONF=$(mktemp /tmp/nginx-default-XXXXXX.conf)
+cat > "${TMP_CONF}" << 'NGINXEOF'
 upstream petclinic_backend {
     server __CONTAINER__:8080;
 }
@@ -100,8 +102,11 @@ server {
 NGINXEOF
 
 # Replace placeholder with actual container name
-sed -i "s/__CONTAINER__/${NEW_CONTAINER}/" /opt/nginx-conf/default.conf
+sed -i "s/__CONTAINER__/${NEW_CONTAINER}/" "${TMP_CONF}"
 
+# Copy config into Nginx container and reload
+docker cp "${TMP_CONF}" "${NGINX_CONTAINER}:/etc/nginx/conf.d/default.conf"
+rm -f "${TMP_CONF}"
 docker exec "${NGINX_CONTAINER}" nginx -s reload
 echo "  ✅ Traffic switched (zero downtime)!"
 
