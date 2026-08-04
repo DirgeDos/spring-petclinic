@@ -104,8 +104,9 @@ NGINXEOF
 # Replace placeholder with actual container name
 sed -i "s/__CONTAINER__/${NEW_CONTAINER}/" "${TMP_CONF}"
 
-# Copy config into Nginx container and reload
-docker cp "${TMP_CONF}" "${NGINX_CONTAINER}:/etc/nginx/conf.d/default.conf"
+# Write config into Nginx container via stdin (avoids "device or resource busy"
+# error from docker cp when the file is bind-mounted).
+docker exec -i "${NGINX_CONTAINER}" sh -c 'cat > /etc/nginx/conf.d/default.conf' < "${TMP_CONF}"
 rm -f "${TMP_CONF}"
 docker exec "${NGINX_CONTAINER}" nginx -s reload
 echo "  ✅ Traffic switched (zero downtime)!"
