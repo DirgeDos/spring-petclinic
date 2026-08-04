@@ -77,9 +77,12 @@ echo "  ✅ ${NEW_CONTAINER} is healthy!"
 # ------------------------------------------------------------
 echo "[3/4] Switching traffic to ${NEW_CONTAINER}..."
 
-docker exec "${NGINX_CONTAINER}" sh -c 'cat > /etc/nginx/conf.d/default.conf' << NGINXCONF
+# Write Nginx config to host file (bind-mounted into container)
+# Using a quoted heredoc to prevent shell expansion of Nginx variables,
+# then use sed to inject the container name.
+cat > /opt/nginx-conf/default.conf << 'NGINXEOF'
 upstream petclinic_backend {
-    server ${NEW_CONTAINER}:8080;
+    server __CONTAINER__:8080;
 }
 
 server {
@@ -87,14 +90,17 @@ server {
 
     location / {
         proxy_pass http://petclinic_backend;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_connect_timeout 5s;
         proxy_read_timeout 60s;
     }
 }
-NGINXCONF
+NGINXEOF
+
+# Replace placeholder with actual container name
+sed -i "s/__CONTAINER__/${NEW_CONTAINER}/" /opt/nginx-conf/default.conf
 
 docker exec "${NGINX_CONTAINER}" nginx -s reload
 echo "  ✅ Traffic switched (zero downtime)!"
