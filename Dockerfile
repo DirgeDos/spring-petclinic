@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY target/spring-petclinic-*.jar app.jar
 
+RUN mkdir -p /app/logs /app/dumps
+
 EXPOSE 8080
 
 ENTRYPOINT ["java", \
@@ -14,7 +16,6 @@ ENTRYPOINT ["java", \
   "-XX:MaxGCPauseMillis=200", \
   "-XX:+HeapDumpOnOutOfMemoryError", \
   "-XX:HeapDumpPath=/app/dumps/", \
-  "-XX:+PrintGCDetails", \
   "-Xlog:gc*:file=/app/logs/gc.log:time,uptime,level,tags:filecount=5,filesize=10m", \
   "-Dfile.encoding=UTF-8", \
   "-Duser.timezone=Asia/Shanghai", \
