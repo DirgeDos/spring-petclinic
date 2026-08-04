@@ -11,9 +11,10 @@ EXPOSE 8080
 ENTRYPOINT ["java", \
   "-Xms256m", \
   "-Xmx512m", \
-  "-XX:NewRatio=2", \
   "-XX:+UseG1GC", \
   "-XX:MaxGCPauseMillis=200", \
+  "-XX:G1NewSizePercent=20", \
+  "-XX:G1MaxNewSizePercent=50", \
   "-XX:+HeapDumpOnOutOfMemoryError", \
   "-XX:HeapDumpPath=/app/dumps/", \
   "-Xlog:gc*:file=/app/logs/gc.log:time,uptime,level,tags:filecount=5,filesize=10m", \
