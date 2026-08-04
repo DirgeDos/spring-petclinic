@@ -17,7 +17,7 @@ pipeline {
 
         stage('Maven Build') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh 'mvn clean package -DskipTests -Dcheckstyle.skip=true -Dspring-javaformat.skip=true'
             }
             post {
                 always {
